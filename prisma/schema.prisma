@@ -1,0 +1,76 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ENUM
+enum PropertyType {
+  RESIDENTIAL
+  CONDO
+}
+
+enum UserType {
+  BUYER
+  REALTOR
+  ADMIN
+}
+
+// MODEL
+model User {
+  id               Int       @id @default(autoincrement())
+  name             String
+  phone            String
+  email            String    @unique
+  password         String
+  user_type        UserType
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+  homes            Home[]
+  buyer_messages   Message[] @relation("buyer_messages")
+  realtor_messages Message[] @relation("realtor_messages")
+}
+
+model Home {
+  id            Int          @id @default(autoincrement())
+  address       String
+  num_of_bed    Int
+  num_of_bath   Float
+  city          String
+  listed_date   DateTime     @default(now())
+  price         Float
+  land_size     Float
+  property_type PropertyType
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+  images        Image[]
+  realtor_id    Int
+  messages      Message[]
+  realtor       User         @relation(fields: [realtor_id], references: [id])
+}
+
+model Image {
+  id         Int      @id @default(autoincrement())
+  url        String
+  home_id    Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  home       Home     @relation(fields: [home_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+}
+
+model Message {
+  id         Int    @id @default(autoincrement())
+  message    String
+  home_id    Int
+  realtor_id Int
+  buyer_id   Int
+  home       Home   @relation(fields: [home_id], references: [id])
+  realtor    User   @relation("buyer_messages", fields: [realtor_id], references: [id])
+  buyer      User   @relation("realtor_messages", fields: [buyer_id], references: [id])
+}
